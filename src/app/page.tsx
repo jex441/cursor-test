@@ -1,33 +1,126 @@
 "use client";
 import { useState } from "react";
+import {
+	DndContext,
+	closestCenter,
+	KeyboardSensor,
+	PointerSensor,
+	useSensor,
+	useSensors,
+	DragEndEvent,
+} from "@dnd-kit/core";
+import {
+	arrayMove,
+	SortableContext,
+	sortableKeyboardCoordinates,
+	useSortable,
+	verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface Todo {
+	id: string;
 	text: string;
 	completed: boolean;
+}
+
+function SortableItem({
+	todo,
+	onToggle,
+	onDelete,
+}: {
+	todo: Todo;
+	onToggle: (id: string) => void;
+	onDelete: (id: string) => void;
+}) {
+	const { attributes, listeners, setNodeRef, transform, transition } =
+		useSortable({ id: todo.id });
+
+	const style = {
+		transform: CSS.Transform.toString(transform),
+		transition,
+	};
+
+	return (
+		<li
+			ref={setNodeRef}
+			style={style}
+			{...attributes}
+			className="flex justify-between items-center p-3 bg-white border rounded shadow-sm cursor-move"
+		>
+			<div className="flex items-center gap-3">
+				<input
+					type="checkbox"
+					checked={todo.completed}
+					onChange={() => onToggle(todo.id)}
+					className="w-4 h-4"
+				/>
+				<span
+					{...listeners}
+					className={todo.completed ? "line-through text-gray-500" : ""}
+				>
+					{todo.text}
+				</span>
+			</div>
+			<button
+				onClick={() => onDelete(todo.id)}
+				className="px-2 py-1 text-red-500 hover:text-red-700"
+			>
+				Delete
+			</button>
+		</li>
+	);
 }
 
 export default function Home() {
 	const [todos, setTodos] = useState<Todo[]>([]);
 	const [newTodo, setNewTodo] = useState("");
 
+	const sensors = useSensors(
+		useSensor(PointerSensor),
+		useSensor(KeyboardSensor, {
+			coordinateGetter: sortableKeyboardCoordinates,
+		})
+	);
+
 	const addTodo = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (newTodo.trim()) {
-			setTodos([...todos, { text: newTodo.trim(), completed: false }]);
+			setTodos([
+				...todos,
+				{
+					id: Date.now().toString(),
+					text: newTodo.trim(),
+					completed: false,
+				},
+			]);
 			setNewTodo("");
 		}
 	};
 
-	const deleteTodo = (index: number) => {
-		setTodos(todos.filter((_, i) => i !== index));
+	const deleteTodo = (id: string) => {
+		setTodos(todos.filter((todo) => todo.id !== id));
 	};
 
-	const toggleTodo = (index: number) => {
+	const toggleTodo = (id: string) => {
 		setTodos(
-			todos.map((todo, i) =>
-				i === index ? { ...todo, completed: !todo.completed } : todo
+			todos.map((todo) =>
+				todo.id === id ? { ...todo, completed: !todo.completed } : todo
 			)
 		);
+	};
+
+	const handleDragEnd = (event: DragEndEvent) => {
+		const { active, over } = event;
+
+		if (over && active.id !== over.id) {
+			setTodos((items) => {
+				const oldIndex = items.findIndex((item) => item.id === active.id);
+				const newIndex = items.findIndex((item) => item.id === over.id);
+
+				return arrayMove(items, oldIndex, newIndex);
+			});
+		}
 	};
 
 	return (
@@ -52,34 +145,24 @@ export default function Home() {
 				</div>
 			</form>
 
-			<ul className="w-full max-w-md space-y-2">
-				{todos.map((todo, index) => (
-					<li
-						key={index}
-						className="flex justify-between items-center p-3 bg-white border rounded shadow-sm"
-					>
-						<div className="flex items-center gap-3">
-							<input
-								type="checkbox"
-								checked={todo.completed}
-								onChange={() => toggleTodo(index)}
-								className="w-4 h-4"
+			<DndContext
+				sensors={sensors}
+				collisionDetection={closestCenter}
+				onDragEnd={handleDragEnd}
+			>
+				<SortableContext items={todos} strategy={verticalListSortingStrategy}>
+					<ul className="w-full max-w-md space-y-2">
+						{todos.map((todo) => (
+							<SortableItem
+								key={todo.id}
+								todo={todo}
+								onToggle={toggleTodo}
+								onDelete={deleteTodo}
 							/>
-							<span
-								className={todo.completed ? "line-through text-gray-500" : ""}
-							>
-								{todo.text}
-							</span>
-						</div>
-						<button
-							onClick={() => deleteTodo(index)}
-							className="px-2 py-1 text-red-500 hover:text-red-700"
-						>
-							Delete
-						</button>
-					</li>
-				))}
-			</ul>
+						))}
+					</ul>
+				</SortableContext>
+			</DndContext>
 		</div>
 	);
 }
