@@ -46,27 +46,51 @@ function SortableItem({
 			ref={setNodeRef}
 			style={style}
 			{...attributes}
-			className="flex justify-between items-center p-3 bg-white border rounded shadow-sm cursor-move"
+			className="flex items-center p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded shadow-sm"
 		>
-			<div className="flex items-center gap-3">
+			<div
+				{...listeners}
+				className="cursor-move px-2 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+			>
+				⋮⋮
+			</div>
+			<div className="flex flex-1 items-center gap-3 ml-2">
 				<input
 					type="checkbox"
 					checked={todo.completed}
 					onChange={() => onToggle(todo.id)}
-					className="w-4 h-4"
+					className="w-4 h-4 accent-blue-500 dark:accent-blue-400"
 				/>
 				<span
-					{...listeners}
-					className={todo.completed ? "line-through text-gray-500" : ""}
+					className={
+						todo.completed
+							? "line-through text-gray-500 dark:text-gray-400"
+							: "dark:text-gray-200"
+					}
 				>
 					{todo.text}
 				</span>
 			</div>
 			<button
 				onClick={() => onDelete(todo.id)}
-				className="px-2 py-1 text-red-500 hover:text-red-700"
+				className="p-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+				aria-label="Delete todo"
 			>
-				Delete
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="20"
+					height="20"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth="2"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+				>
+					<path d="M3 6h18"></path>
+					<path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+					<path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+				</svg>
 			</button>
 		</li>
 	);
@@ -124,8 +148,10 @@ export default function Home() {
 	};
 
 	return (
-		<div className="flex flex-col items-center justify-start p-8 min-h-screen">
-			<h1 className="text-4xl font-bold mb-8">Todo List</h1>
+		<div className="flex flex-col items-center justify-start p-8 min-h-screen bg-gray-50 dark:bg-gray-900">
+			<h1 className="text-4xl font-bold mb-8 text-gray-900 dark:text-white">
+				Todo List
+			</h1>
 
 			<form onSubmit={addTodo} className="w-full max-w-md mb-8">
 				<div className="flex gap-2">
@@ -134,11 +160,11 @@ export default function Home() {
 						value={newTodo}
 						onChange={(e) => setNewTodo(e.target.value)}
 						placeholder="Add a new todo..."
-						className="flex-1 p-2 border rounded"
+						className="flex-1 p-2 border dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
 					/>
 					<button
 						type="submit"
-						className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+						className="px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white rounded hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
 					>
 						Add
 					</button>
